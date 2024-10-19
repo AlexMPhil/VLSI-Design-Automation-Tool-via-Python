@@ -260,3 +260,164 @@ for i in range(len(sd)):                                        #Iterate through
     print('Vertex',nodes[i],'has dist of ',sd[i],'==> ',end='')
     Path(i,start)
 
+import random
+def Kernighan_Lin(G, init_part=None):                                                   #KL Algorithm for partitioning
+  print('Edges with weights:',edges_with_weights)
+  BV=len(nodes)//2
+  if init_part==None:
+    options=nodes.copy()
+    random.shuffle(options)                                               #random.shuffle ensures random initial bipartition of nodes
+    par1=options[:BV]
+    par2=options[BV:]
+    u1=options[:BV]
+    u2=options[BV:]
+  else:
+    par1=init_part[0]
+    par2=init_part[1]
+    u1=par1[:]
+    u2=par2[:]
+  print('Par1:',par1)
+  print('Par2:',par2)
+  def Cost(i,j,edges_with_weights):                                     #COst function to give edge weight cost
+      for a,b,c in edges_with_weights:
+        if a==i and b==j:
+          return c
+      else:
+         return 0
+  G_Sum=0                                                               #G_Sum will hold sumation of max G values in each iteration
+  G_Ceil=float('-inf')                                                  #G_Ceil will hold the max G_Sum value in all iteration
+  Distribution=[]                                                       #Distribution array will hold the best partition and G_Ceil
+  no_of_cuts=0
+  for iter in range(BV):
+    I_List={}
+    E_List={}
+    D_List={}
+    print("Iteration",iter)
+    print("Curently partitions are:")
+    print('Par1:',par1)
+    print('Par2:',par2)
+    print('u1:',u1)
+    print('u2:',u2)
+    if iter>=0:                                                         #supposed to be iter=0 but the else is not ready yet
+      for i in par1:                                                    #both for loops fill the I,E and D Lists
+        I=0
+        E=0
+        for s,e,w in edges_with_weights:
+          if s==i:
+            if e in par1:
+              I+=w
+            elif e in par2:
+              E+=w
+        D=E-I
+        I_List[i]=I
+        E_List[i]=E
+        D_List[i]=D
+      for i in par2:
+        I=0
+        E=0
+        for s,e,w in edges_with_weights:
+          if s==i:
+            if e in par2:
+              I+=w
+            elif e in par1:
+              E+=w
+        D=E-I
+        I_List[i]=I
+        E_List[i]=E
+        D_List[i]=D
+      print('I_List',I_List)
+      print('E_List',E_List)
+      print('D_List',D_List)
+    else:                                                               #This else for later code revision to make optmised changes of D values
+      pass
+    G_List={}
+    for i in u1:
+      for j in u2:
+         Gval=D_List[i]+D_List[j]-(2*Cost(i,j,edges_with_weights))      #G=Di+Dj=2Cij
+         G_List[(i,j)]=Gval
+         Gval=D_List[j]+D_List[i]-(2*Cost(j,i,edges_with_weights))
+         G_List[(j,i)]=Gval
+    for (i, j), Gval in G_List.items():
+      print(f"G value for ({i}, {j}) is: {Gval}")
+    M=max(G_List.values())                                              #M will stroee the max G value
+    print('Max g value=',M)
+    G_Sum+=M
+    print('Sum of G_max:',G_Sum)
+    Check1=float('inf')                                                           #Check1 and Check2 are variables helping with tie-breaker scenarios in the algorithm wih respect to gain
+    Check2=-1
+    SWAP=list(G_List.keys())[0]
+    for a,b in G_List.items():
+      if b==M:
+        if Cost(a[0],a[1],edges_with_weights)<Check1:
+          Check1=Cost(a[0],a[1],edges_with_weights)
+          print('Pair to be swapped',a)
+          print('Cost=',Cost(a[0],a[1],edges_with_weights))
+          SWAP=a
+        #if Cost(a[0],a[1],edges_with_weights)==Check1 and abs(E_List[a[0]]-E_List[a[1]])>Check2: # Updates pair to be swapped if it has better cross connects and better or equal edge cost
+        #  Check2=abs(E_List[a[0]]-E_List[a[1]])
+        #  print('Pair to be swapped through cond 2',a)
+        #  print('Cost=',Cost(a[0],a[1],edges_with_weights))
+        #  SWAP=a
+    print('Final Pair as follows')
+    print('from par1:',SWAP[0])
+    print('from par2:',SWAP[1])
+    dashed_edges=[]
+    if SWAP[0] in u1:
+      u1.remove(SWAP[0])
+      u2.remove(SWAP[1])
+      par1.remove(SWAP[0])
+      par2.remove(SWAP[1])
+      par1.append(SWAP[1])
+      par2.append(SWAP[0])
+    elif SWAP[0] in u2:
+      u1.remove(SWAP[1])
+      u2.remove(SWAP[0])
+      par1.remove(SWAP[1])
+      par2.remove(SWAP[0])
+      par1.append(SWAP[0])
+      par2.append(SWAP[1])
+    if G_Sum>G_Ceil:
+      G_Ceil=G_Sum
+      a=par1[:]
+      b=par2[:]
+      Distribution=[a,b,iter,G_Ceil]
+    PARG1=G.subgraph(par1)
+    PARG2=G.subgraph(par2)
+    for i,j in G.edges():
+      if (i in par1 and j in par2) or (i in par2 and j in par1):
+        dashed_edges.append((i,j))
+    no_of_cuts=len(dashed_edges)
+    print('No of cuts in iter',iter,'=',no_of_cuts)
+    fig, (ax1, ax2) = plt.subplots(1, 2)                                 #Create a figure with 1 row and 2 columns
+    nx.draw(PARG1, pos, with_labels=True, node_color='orange', ax=ax1)   #Draw partition 1 on ax1
+    ax1.set_title('Iteration ' + str(iter) + ': Partition 1')
+    nx.draw(PARG2, pos, with_labels=True, node_color='yellow', ax=ax2)   #Draw partition 2 on ax2
+    ax2.set_title('Iteration ' + str(iter) + ': Partition 2')
+    plt.show()
+    plt.figure(figsize =(16, 9))
+    for node in G.nodes:
+      if node in par1:                                                   #Partition 1 is coded orange
+        nx.draw_networkx_nodes(G, pos, nodelist=[node], node_size=sizes[node], node_color='orange')
+      if node in par2:                                                   #Partition 2 is coded orange
+        nx.draw_networkx_nodes(G, pos, nodelist=[node], node_size=sizes[node], node_color='yellow')
+      nx.draw_networkx_labels(G, pos, labels={node:node})
+    for edge in G.edges:
+      if edge in dashed_edges:                                           #Dashed edges
+        nx.draw_networkx_edges(G, pos, edgelist=[edge], style='--', arrows=True)
+      else:
+        nx.draw_networkx_edges(G, pos, edgelist=[edge], arrows=True)
+    nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_weights, verticalalignment='baseline', font_size=7)
+    plt.title('Iteration ' + str(iter) + ': '+filename)
+    plt.show()
+  print('Final Result:')
+  print('Partition 1 :',Distribution[0])
+  print('Partition 2 :',Distribution[1])
+  print('KL Iteration :',Distribution[2])
+  print('Max G_Sum value :',Distribution[3])
+  return Distribution
+
+undirected_G = G.to_undirected()
+Res1=Kernighan_Lin(undirected_G)
+
+new_part=(Res1[0],Res1[1])
+Res2=Kernighan_Lin(undirected_G,new_part)
