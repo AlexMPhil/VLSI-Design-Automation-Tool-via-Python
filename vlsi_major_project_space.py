@@ -421,3 +421,36 @@ Res1=Kernighan_Lin(undirected_G)
 
 new_part=(Res1[0],Res1[1])
 Res2=Kernighan_Lin(undirected_G,new_part)
+
+
+def DFS(mat, start, nodes, polish):
+    n = mat.shape[0]
+    visited = np.zeros(n, dtype=bool)
+    output = []
+    fl=0
+    print('before helper loop')
+    def helper(node,fl):
+        fl+=1
+        print('helper loop', fl)
+        print('node', nodes[node])
+
+        visited[node] = True
+        output.append(node)
+        for neighbor in range(n):
+          print('neighbor', nodes[neighbor])
+          if mat[node][neighbor] >= 1 and visited[neighbor]==False:
+            edge_type = "V" if neighbor < node else "H"
+            helper(neighbor, fl)
+            polish.append(edge_type)
+            polish.append(nodes[node])
+
+    helper(fp,fl)
+    return output
+print(nodes)
+polish_expression = []
+vn = DFS(adjacency_matrix, fp, nodes, polish_expression)
+vnn=[]
+for i in vn:
+  vnn.append(nodes[i])
+print(vnn)  # Output: [0, 1, 3, 4, 2]
+print(polish_expression)
