@@ -63,6 +63,7 @@ class Graph:
 import re                                     #re is used for Python Regular Expression and Pattern Matching
 import matplotlib.pyplot as plt               #matplotlib.pyplot is used for visualizations and plots
 import networkx as nx                         #networkx is used for creating nd manipulating networks and graphs
+import numpy as np
 
 inputs=[]
 outputs=[]
@@ -166,7 +167,7 @@ edge_weights={}
 for a,b in list(graph.edges.keys()):
   weight=int((sizes[a])/100)
   edges_with_weights.append((a,b,weight))
-  edge_weights[(a,b)]=weight                        #weights for each edge proportional to size of start node to visualize delay by node
+  edge_weights[(a,b)]=weight                        #weights for each edge proportional to size of start node to visualize gate delay by node
 print(edges_with_weights)
 
 G = nx.DiGraph()                                                                                   #Creating a directed graph
@@ -260,6 +261,8 @@ for i in range(len(sd)):                                        #Iterate through
     print('Vertex',nodes[i],'has dist of ',sd[i],'==> ',end='')
     Path(i,start)
 
+"""KL Algorithm"""
+
 import random
 def Kernighan_Lin(G, init_part=None):                                                   #KL Algorithm for partitioning
   print('Edges with weights:',edges_with_weights)
@@ -288,6 +291,7 @@ def Kernighan_Lin(G, init_part=None):                                           
   G_Ceil=float('-inf')                                                  #G_Ceil will hold the max G_Sum value in all iteration
   Distribution=[]                                                       #Distribution array will hold the best partition and G_Ceil
   no_of_cuts=0
+  min_no_of_cuts = float('inf')
   for iter in range(BV):
     I_List={}
     E_List={}
@@ -333,7 +337,7 @@ def Kernighan_Lin(G, init_part=None):                                           
     G_List={}
     for i in u1:
       for j in u2:
-         Gval=D_List[i]+D_List[j]-(2*Cost(i,j,edges_with_weights))      #G=Di+Dj=2Cij
+         Gval=D_List[i]+D_List[j]-(2*Cost(i,j,edges_with_weights))      #G=Di+Dj-2Cij
          G_List[(i,j)]=Gval
          Gval=D_List[j]+D_List[i]-(2*Cost(j,i,edges_with_weights))
          G_List[(j,i)]=Gval
@@ -376,17 +380,17 @@ def Kernighan_Lin(G, init_part=None):                                           
       par2.remove(SWAP[0])
       par1.append(SWAP[0])
       par2.append(SWAP[1])
-    if G_Sum>G_Ceil:
-      G_Ceil=G_Sum
-      a=par1[:]
-      b=par2[:]
-      Distribution=[a,b,iter,G_Ceil]
     PARG1=G.subgraph(par1)
     PARG2=G.subgraph(par2)
     for i,j in G.edges():
       if (i in par1 and j in par2) or (i in par2 and j in par1):
         dashed_edges.append((i,j))
     no_of_cuts=len(dashed_edges)
+    if no_of_cuts<min_no_of_cuts:
+      min_no_of_cuts=no_of_cuts
+      a=par1[:]
+      b=par2[:]
+      Distribution=[a,b,iter,min_no_of_cuts]
     print('No of cuts in iter',iter,'=',no_of_cuts)
     fig, (ax1, ax2) = plt.subplots(1, 2)                                 #Create a figure with 1 row and 2 columns
     nx.draw(PARG1, pos, with_labels=True, node_color='orange', ax=ax1)   #Draw partition 1 on ax1
@@ -413,15 +417,21 @@ def Kernighan_Lin(G, init_part=None):                                           
   print('Partition 1 :',Distribution[0])
   print('Partition 2 :',Distribution[1])
   print('KL Iteration :',Distribution[2])
-  print('Max G_Sum value :',Distribution[3])
+  print('no of cuts :',Distribution[3])
   return Distribution
 
 undirected_G = G.to_undirected()
 Res1=Kernighan_Lin(undirected_G)
 
 new_part=(Res1[0],Res1[1])
-Res2=Kernighan_Lin(undirected_G,new_part)
 
+"""Floorplanning
+
+1. Deciding the block sizes of each gate
+2. Create a grid
+3. find directions of each block w.r.t each other
+4. Plot them without intersection
+"""
 
 def DFS(mat, start, nodes, polish):
     n = mat.shape[0]
@@ -454,3 +464,11 @@ for i in vn:
   vnn.append(nodes[i])
 print(vnn)  # Output: [0, 1, 3, 4, 2]
 print(polish_expression)
+
+class Block:
+    def __init__(self, id, width, height):
+        self.id = id
+        self.width = width
+        self.height = height
+        self.x = 0
+        self.y = 0
