@@ -472,3 +472,24 @@ class Block:
         self.height = height
         self.x = 0
         self.y = 0
+
+print(graph.nodes)
+
+# Block sizes for each gate type
+block_sizes = {'NOT': (1, 2), 'NAND': (3, 4), 'NOR': (2, 3), 'AND': (2, 3),
+               'OR': (3, 4), 'XOR': (3, 4), 'DFF': (5, 7)}
+
+
+# Create a list of tuples with gate nodes and sizes (remove 'data' term)
+gate_array = []
+
+for gate, details in graph.nodes.items():
+    gate_type = details['data']
+    if gate_type in block_sizes:
+        gate_array.append((gate, block_sizes[gate_type]))  # Append gate and size as tuple
+    else:
+        gate_array.append((gate, None))  # Append None if size is not available
+
+# Output the array
+print("Gate array with nodes and sizes:")
+print(gate_array)
