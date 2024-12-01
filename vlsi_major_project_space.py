@@ -136,41 +136,69 @@ print(graph)
 print('Inputs:',inputs)
 print('Outputs:',outputs)
 
-#This is section is for beautifying graph and adding color, size and weight for each node type
-colors={}
-sizes={}
-for x,y in graph.nodes.items():
-  if y['data']=='NOT':
-    colors[x]='lightblue'
-    sizes[x]=100
-  elif y['data']=='NAND':
-    colors[x]='yellow'
-    sizes[x]=200
-  elif y['data']=='NOR':
-    colors[x]='orange'
-    sizes[x]=200
-  elif y['data']=='AND':
-    colors[x]='pink'
-    sizes[x]=150
-  elif y['data']=='OR':
-    colors[x]='plum'
-    sizes[x]=150
-  elif y['data']=='XOR':
-    colors[x]='indigo'
-    sizes[x]=300
-  elif y['data']=='DFF':
-    colors[x]='grey'
-    sizes[x]=500
-  else:                                             #for dummy node
-    colors[x]='bisque'
-    sizes[x]=100
-edges_with_weights=[]
-edge_weights={}
-for a,b in list(graph.edges.keys()):
-  weight=int((sizes[a])/100)
-  edges_with_weights.append((a,b,weight))
-  edge_weights[(a,b)]=weight                        #weights for each edge proportional to size of start node to visualize gate delay by node
-print(edges_with_weights)
+# This section is for beautifying graph and adding color, size, and weight for each node type
+colors = {}
+sizes = {}
+dimensions = {}  # To store the block sizes
+
+# Define the block sizes for each node type
+block_sizes = {
+    'NOT': (1, 2),
+    'NAND': (3, 4),
+    'NOR': (2, 3),
+    'AND': (2, 3),
+    'OR': (3, 4),
+    'XOR': (3, 4),
+    'DFF': (5, 7)
+}
+
+# Assign colors, sizes, and dimensions based on node type
+for x, y in graph.nodes.items():
+    node_type = y['data']
+
+    if node_type == 'NOT':
+        colors[x] = 'lightblue'
+        sizes[x] = 100
+    elif node_type == 'NAND':
+        colors[x] = 'yellow'
+        sizes[x] = 200
+    elif node_type == 'NOR':
+        colors[x] = 'orange'
+        sizes[x] = 200
+    elif node_type == 'AND':
+        colors[x] = 'pink'
+        sizes[x] = 150
+    elif node_type == 'OR':
+        colors[x] = 'plum'
+        sizes[x] = 150
+    elif node_type == 'XOR':
+        colors[x] = 'indigo'
+        sizes[x] = 300
+    elif node_type == 'DFF':
+        colors[x] = 'grey'
+        sizes[x] = 500
+    else:  # For dummy node
+        colors[x] = 'bisque'
+        sizes[x] = 100
+
+    # Assign block sizes for each node
+    dimensions[x] = block_sizes.get(node_type, (1, 1))  # Default block size for unknown nodes
+
+# Assign weights for edges proportional to the size of the start node
+edges_with_weights = []
+edge_weights = {}
+for a, b in list(graph.edges.keys()):
+    weight = int(sizes[a] / 100)
+    edges_with_weights.append((a, b, weight))
+    edge_weights[(a, b)] = weight  # Weights for each edge to visualize gate delay by node
+
+print("Edges with weights:", edges_with_weights)
+
+Node_sizes = [
+    (node, dimensions[node]) for node in graph.nodes.keys()
+]
+
+print("Node Sizes: ", Node_sizes)
 
 G = nx.DiGraph()                                                                                   #Creating a directed graph
 G.add_nodes_from(list(graph.nodes))
@@ -208,13 +236,18 @@ print(adjacency_matrix)
 #Finding start element
 print('The outputs are:')
 for o in range(len(outputs)):
-  print(o+1,'-',outputs[o])
-sp=int(input('Enter which output to refer:'))
-if (sp-1)<len(outputs):
-  fp=ind[outputs[sp-1]]
+    print(o + 1, '-', outputs[o])
+if len(outputs) == 1:
+    sp = 1
+    print('Only one output available. Automatically selecting it.')
 else:
-  fp=ind[outputs[-1]]
-print('fp=',fp)
+    sp = int(input('Enter which output to refer:'))
+if (sp - 1) < len(outputs):
+    fp = ind[outputs[sp - 1]]
+else:
+    fp = ind[outputs[-1]]
+
+print('fp =', fp)
 
 from inspect import EndOfBlock
 #Shortest Path Algorithm
@@ -472,16 +505,6 @@ Placement
 """
 
 def simplify_graph(graph):
-  """
-  Simplifies a graph by creating a new graph where keys are nodes and values are accessible nodes.
-
-  Args:
-    graph: The original graph dictionary.
-
-  Returns:
-    A simplified graph dictionary.
-  """
-
   simplified_graph = {}
   for node, neighbors in graph.items():
     simplified_graph[node] = set()
@@ -537,7 +560,6 @@ for i in tokens:
     count+=1
 
 def graph_to_polish_postorder(graph, node, operator, level=0, visited=None):
-    """Convert a graph to a postorder Polish expression."""
 
     if visited is None:
         visited = set()
@@ -573,10 +595,6 @@ polish_expression_postorder = graph_to_polish_postorder(graph, 'G17', "V")
 polish_expression_postorder="( "+polish_expression_postorder+" ) V"
 print(polish_expression_postorder)
 
-def remove_substrings(text, substrings_to_remove):
-  for substring in substrings_to_remove:
-    text = text.replace(substring, "")
-  return text
 polish_expression_postorder=remove_substrings(polish_expression_postorder, ['(  ) H', '(  ) V'])
 print(polish_expression_postorder)
 
@@ -648,9 +666,6 @@ def process_floorplan_notation(notation):
                     # Push the result of the unary operation back to the stack
                     stack.append(expression.strip())
 
-            #print(f"Current expression: {expression.strip()}")  # Debug print
-            #print(f"Stack: {stack}")  # Debug print
-
         return expression.strip()
 
     # Process the whole notation
@@ -660,7 +675,7 @@ def process_floorplan_notation(notation):
 
 
 # Example usage:
-nodes = {'G14', 'G10', 'G5', 'G6', 'G8', 'G7', 'G13', 'G12', 'G15', 'G16', 'G9', 'G11', 'G17'}
+#nodes = {'G14', 'G10', 'G5', 'G6', 'G8', 'G7', 'G13', 'G12', 'G15', 'G16', 'G9', 'G11', 'G17'}
 floorplan_structure = process_floorplan_notation(tokens)
 
 # Output the result
@@ -671,23 +686,19 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 
 # Example input
-node_sizes = [
-    ('G5', (5, 7)), ('G10', (2, 3)), ('G6', (5, 7)), ('G11', (2, 3)),
-    ('G7', (5, 7)), ('G13', (2, 3)), ('G14', (1, 2)), ('G17', (1, 2)),
-    ('G8', (2, 3)), ('G15', (3, 4)), ('G12', (2, 3)), ('G16', (3, 4)),
-    ('G9', (3, 4)),
-]
-def remove_substrings(text, substrings_to_remove):
-  for substring in substrings_to_remove:
-    text = text.replace(substring, "")
-  return text
+# node_sizes = [
+#     ('G5', (5, 7)), ('G10', (2, 3)), ('G6', (5, 7)), ('G11', (2, 3)),
+#     ('G7', (5, 7)), ('G13', (2, 3)), ('G14', (1, 2)), ('G17', (1, 2)),
+#     ('G8', (2, 3)), ('G15', (3, 4)), ('G12', (2, 3)), ('G16', (3, 4)),
+#     ('G9', (3, 4)),
+# ]
 floorplan_structurer=remove_substrings(floorplan_structure, ['(', ')'])
 print(floorplan_structurer)
 floorplan_structure=floorplan_structurer.split()
 print(floorplan_structure)
 
 # Create a dictionary for easy access to node sizes
-node_size_dict = dict(node_sizes)
+node_size_dict = dict(Node_sizes)
 
 def placement_with_variable_blocks(nodes, node_sizes, region_bounds, floorplan_structure):
     node_size_dict = {node: size for node, size in node_sizes}
@@ -739,9 +750,6 @@ def placement_with_variable_blocks(nodes, node_sizes, region_bounds, floorplan_s
                 current_y += block_height  # Move vertically for the next block
                 y_hold = max(y_hold, block_height)  # Track the max height in this column
 
-            # Update the region boundaries
-            #x_lim = max(x_min, current_x + x_hold)  # Correct calculation of x_lim
-            #y_lim = max(y_min, current_y + y_hold)  # Correct calculation of y_lim
     x_lim=0
     y_lim=0
     for ent in placement_coords:
@@ -781,23 +789,11 @@ def visualize_variable_blocks(placement_coords, region_bounds, xl, yl):
 
     return Area
 
-
-# Node sizes (excluding D-none)
-node_sizes = [
-    ('G5', (5, 7)), ('G10', (2, 3)), ('G6', (5, 7)), ('G11', (2, 3)),
-    ('G7', (5, 7)), ('G13', (2, 3)), ('G14', (1, 2)), ('G17', (1, 2)),
-    ('G8', (2, 3)), ('G15', (3, 4)), ('G12', (2, 3)), ('G16', (3, 4)),
-    ('G9', (3, 4)),
-]
-
 # Define the region (single area)
 region_bounds = (0, 30, 0, 30)
 
-# Define the new floorplan structure
-#floorplan_structure = ['G14', 'H', 'G10', 'V', 'G5', 'H', 'G6', 'V', 'G8', 'V', 'G13', 'H', 'G7', 'V', 'G12', 'H', 'G15', 'H', 'G16', 'V', 'G9', 'H', 'G11', 'V', 'G17']
-
 # Get placement coordinates
-pc, xl, yl = placement_with_variable_blocks(nodes, node_sizes, region_bounds, floorplan_structure)
+pc, xl, yl = placement_with_variable_blocks(nodes, Node_sizes, region_bounds, floorplan_structure)
 
 # Visualize placement
 visualize_variable_blocks(pc, region_bounds, xl, yl)
@@ -858,13 +854,16 @@ region_bounds = (0, 30, 0, 30)
 # floorplan_structure = ['G6', 'H', 'G14', 'V', 'G8', 'H', 'G16', 'V', 'G13', 'H', 'G7', 'V', 'G12', 'H', 'G15', 'V', 'G9', 'H', 'G10', 'V', 'G5', 'H', 'G11', 'V', 'G17']
 
 # Get placement coordinates
-pc, xl, yl = placement_with_variable_blocks(nodes, node_sizes, region_bounds, modified_expression.split(' '))
+pc, xl, yl = placement_with_variable_blocks(nodes, Node_sizes, region_bounds, modified_expression.split(' '))
 
 # Visualize placement
 visualize_variable_blocks(pc, region_bounds, xl, yl)
 plt.show()
 # Print placement coordinates
 print("Placement Coordinates:", pc)
+
+import random
+import math
 
 def simulated_annealing(nodes, node_sizes, region_bounds, initial_expression, T_init, alpha, max_iter):
     """Simulated annealing for floorplanning."""
@@ -900,14 +899,14 @@ def simulated_annealing(nodes, node_sizes, region_bounds, initial_expression, T_
             print(f"Iteration {iteration}, Current Cost: {current_cost}, Best Cost: {best_cost}, T: {T:.2f}")
 
     return best_expression, best_cost, cost_history
-region_bounds = (0, 100, 0, 100)
+region_bounds = (0, 50, 0, 50)
 T_init = 1000  # Initial temperature
 alpha = 0.9    # Cooling rate
 max_iter = 100
 
 best_expression, best_cost, cost_history = simulated_annealing(
-    nodes=[node for node, _ in node_sizes],
-    node_sizes=node_sizes,
+    nodes=[node for node, _ in Node_sizes],
+    node_sizes=Node_sizes,
     region_bounds=region_bounds,
     initial_expression=floorplan_structure,
     T_init=T_init,
@@ -925,3 +924,9 @@ plt.ylabel('Cost (Area)')
 plt.title('Simulated Annealing Cost Reduction')
 plt.grid()
 plt.show()
+
+pc, xl, yl = placement_with_variable_blocks(nodes, Node_sizes, region_bounds, best_expression)
+
+# Visualize placement
+visualize_variable_blocks(pc, region_bounds, xl, yl)
+
