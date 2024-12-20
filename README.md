@@ -34,7 +34,7 @@ or processes. All of this is done with an input of netlist in a bench file forma
 ISCAS85.
 
 
-## Technologies used
+## Objectives
 
 1. Develop a Python-based tool for automating the physical design phase of VLSI,
 covering essential tasks such as Partitioning, Floorplanning, Placement, and (in future)
